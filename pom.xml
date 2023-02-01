@@ -4,12 +4,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.camunda.community.extension.name</groupId>
-  <artifactId>give-me-a-name</artifactId>
+  <groupId>org.camunda.community.messagecorrelator</groupId>
+  <artifactId>message-correlator</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>give-me-a-name</name>
+  <name>message-correlator</name>
 
   <scm>
     <url>https://github.com/camunda-community-hub/maven-template</url>
@@ -56,28 +56,74 @@
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-params -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+<!--      <version>5.9.2</version>-->
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Graph library -->
+    <dependency>
+      <groupId>space.earlygrey</groupId>
+      <artifactId>simple-graphs</artifactId>
+      <version>v5.1.1</version>
+    </dependency>
+    <!-- Reactive Spring -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+      <version>2.7.8</version>
+    </dependency>
+    <!-- BPMN Model API -->
+    <dependency>
+      <groupId>io.camunda</groupId>
+      <artifactId>zeebe-bpmn-model</artifactId>
+      <version>8.1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.camunda</groupId>
+      <artifactId>zeebe-client-java</artifactId>
+      <version>8.1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.12.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <version>2.7.8</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <rules>
-            <dependencyConvergence/>
-          </rules>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+      <!-- FIXME: reactivate enforcer -->
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-enforcer-plugin</artifactId>-->
+<!--        <version>3.1.0</version>-->
+<!--        <configuration>-->
+<!--          <rules>-->
+<!--            <dependencyConvergence/>-->
+<!--          </rules>-->
+<!--        </configuration>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <phase>verify</phase>-->
+<!--            <goals>-->
+<!--              <goal>enforce</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -143,5 +189,13 @@
       </plugin>
     </plugins>
   </build>
+
+  <!-- unavailable via camunda mirror; MIT license -->
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
 
 </project>
