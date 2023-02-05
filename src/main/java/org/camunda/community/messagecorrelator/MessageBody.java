@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-public class MessageBody implements Comparable<MessageBody> {
+public class MessageBody {
 
   public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
 
@@ -15,12 +15,6 @@ public class MessageBody implements Comparable<MessageBody> {
 
   private String message;
   private boolean isSynthetic;
-
-  /** will sort most recent MessageBodies first, so newer date will end up before older date. */
-  @Override
-  public int compareTo(MessageBody other) {
-    return this.getDate().before(other.getDate()) ? 1 : -1;
-  }
 
   public String getMessage() {
     return message;

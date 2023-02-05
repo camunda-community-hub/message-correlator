@@ -1,3 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.camunda.community.messagecorrelator.BeanConfig
-

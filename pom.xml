@@ -4,17 +4,23 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.camunda.community.messagecorrelator</groupId>
   <artifactId>message-correlator</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>message-correlator</name>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
   <scm>
-    <url>https://github.com/camunda-community-hub/maven-template</url>
-    <connection>scm:git:git@github.com:camunda-community-hub/maven-template.git</connection>
-    <developerConnection>scm:git:git@github.com:camunda-community-hub/maven-template.git
+    <url>https://github.com/camunda-community-hub/message-correlator</url>
+    <connection>scm:git:git@github.com:camunda-community-hub/message-correlator.git</connection>
+    <developerConnection>scm:git:git@github.com:camunda-community-hub/message-correlator.git
     </developerConnection>
     <tag>HEAD</tag>
   </scm>
@@ -30,6 +36,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <version.java>11</version.java>
     <maven.version>3.0</maven.version>
+    <zeebe.version>8.1.0</zeebe.version>
   </properties>
 
   <dependencyManagement>
@@ -60,7 +67,6 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-<!--      <version>5.9.2</version>-->
       <scope>test</scope>
     </dependency>
 
@@ -70,29 +76,38 @@
       <artifactId>simple-graphs</artifactId>
       <version>v5.1.1</version>
     </dependency>
-    <!-- Reactive Spring -->
+    <!-- Mono -->
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-      <version>2.7.8</version>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <version>3.5.2</version>
     </dependency>
     <!-- BPMN Model API -->
     <dependency>
       <groupId>io.camunda</groupId>
       <artifactId>zeebe-bpmn-model</artifactId>
-      <version>8.1.0</version>
+      <version>${zeebe.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.camunda</groupId>
       <artifactId>zeebe-client-java</artifactId>
-      <version>8.1.0</version>
+      <version>${zeebe.version}</version>
+      <scope>provided</scope>
     </dependency>
 
+    <!-- join for csv logging  -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.12.0</version>
+    </dependency>
+
+    <!-- properties -->
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
+      <version>1.10</version>
     </dependency>
 
     <dependency>
@@ -105,25 +120,24 @@
 
   <build>
     <plugins>
-      <!-- FIXME: reactivate enforcer -->
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-enforcer-plugin</artifactId>-->
-<!--        <version>3.1.0</version>-->
-<!--        <configuration>-->
-<!--          <rules>-->
-<!--            <dependencyConvergence/>-->
-<!--          </rules>-->
-<!--        </configuration>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <phase>verify</phase>-->
-<!--            <goals>-->
-<!--              <goal>enforce</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <rules>
+            <dependencyConvergence/>
+          </rules>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -190,7 +204,7 @@
     </plugins>
   </build>
 
-  <!-- unavailable via camunda mirror; MIT license -->
+  <!-- required for space.earlgrey.simple-graphs -->
   <repositories>
     <repository>
       <id>jitpack.io</id>

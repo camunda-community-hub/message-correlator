@@ -6,11 +6,11 @@ import io.camunda.zeebe.model.bpmn.instance.*;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
-import space.earlygrey.simplegraphs.Graph;
 import space.earlygrey.simplegraphs.Path;
 
 public class BpmnModelService {
@@ -18,21 +18,47 @@ public class BpmnModelService {
   private static final Logger LOG = LoggerFactory.getLogger(BpmnModelService.class);
 
   private final BpmnModelInstance modelInstance;
-
-  private MyDirectedGraph<String> processAsGraph;
-  Map<String, Pair<List<String>, List<String>>> replacements = new HashMap<>();
-  Map<String, Set<String>> predecessorToBeRemoved = new HashMap<>();
+  private final DirectedGraphWithSuccessorsPredecessors<String>
+      directedGraphWithSuccessorsPredecessors;
+  private final Map<String, Pair<List<String>, List<String>>> replacements = new HashMap<>();
+  private final Map<String, Set<String>> predecessorToBeRemoved = new HashMap<>();
 
   public BpmnModelService(String pathBpmnFile) {
-    modelInstance = readModel(pathBpmnFile);
-    createGraph();
+    File file = new File(pathBpmnFile);
+    modelInstance = Bpmn.readModelFromFile(file);
+    directedGraphWithSuccessorsPredecessors = createGraph();
   }
 
   /**
-   * if 1 candidate gets returned -> this is the targetBpmnElementId if N candidates get returned ->
-   * have to find the shortest path next step
+   * @param lastProcessedMessage
+   * @param targetMessage
+   * @return
    */
-  public List<String> determineBpmnElementIdsForMessage(String message) {
+  public List<String> determineMessagesToSend(
+      MessageBody lastProcessedMessage, String targetMessage) {
+    // get bpmnElementIds that are associated to last processed message
+    List<String> bpmnElementIdCandidates =
+        determineBpmnElementIdsForMessage(lastProcessedMessage.getMessage());
+    // as all bpmnElementIdCandidates will lead to the same following event (see Prerequisites),
+    // take first (could be any)
+    String lastCompletedBpmnElementId = bpmnElementIdCandidates.get(0);
+
+    List<String> strings =
+        determineMessagesFromBpmnElementIdToTargetMessage(
+            lastCompletedBpmnElementId, targetMessage);
+    strings.remove(0); // remove first entry, as this is associated to the last processed message.
+    return strings;
+  }
+
+  /**
+   * Determines BpmnElementIDs for a given Message. As one Message can be associated to many
+   *
+   * @param message the associated BpmnElemenIds should be found for
+   * @return List of associated BpmnElementIds
+   * @throws NoMatchingBpmnElemenIdFoundException if message cannot be matched to BpmnElement(s)
+   */
+  List<String> determineBpmnElementIdsForMessage(String message) {
+    // TODO: currently package-private, so it can be better tested
     Collection<CatchEvent> catchEvents = modelInstance.getModelElementsByType(CatchEvent.class);
     List<String> result = new ArrayList<>();
     catchEvents.stream()
@@ -41,48 +67,53 @@ public class BpmnModelService {
                 ce instanceof IntermediateCatchEvent
                     || (ce instanceof BoundaryEvent && ((BoundaryEvent) ce).cancelActivity())
                     || (ce instanceof StartEvent
+                        && !isInEventbasedSubProcess(ce)
                         && ce.getEventDefinitions().size() == 1)) // BPMN v2.0.2 pp. 394-398
         .forEach(
             ce -> {
               Collection<EventDefinition> eventDefinitions = ce.getEventDefinitions();
 
-              EventDefinition eventDefinition = eventDefinitions.stream().findFirst().get();
+              EventDefinition eventDefinition =
+                  eventDefinitions.stream()
+                      .findFirst()
+                      .orElseThrow(NoMatchingBpmnElemenIdFoundException::new);
               if (eventDefinition instanceof MessageEventDefinition
                   && ((MessageEventDefinition) eventDefinition)
                       .getMessage()
                       .getName()
                       .equals(message)) {
-                LOG.info("{} is a message with bpmnElementId={}", ce.getName(), ce.getId());
+                LOG.info(
+                    "{} is a message that is associated with bpmnElementId={}",
+                    ce.getName(),
+                    ce.getId());
                 result.add(ce.getId());
               }
             });
 
-    // FIXME: This is the only case in which same Message (PREADVICE) can lead to 2 followsups (in
-    //  this case: within event-based subprocess)
-    result.removeIf(bpmnElementId -> bpmnElementId.equals("Event_06wf1r6"));
+    if (result.isEmpty()) {
+      throw new NoMatchingBpmnElemenIdFoundException();
+    }
 
     return result;
   }
 
-  public List<String> determineMessagesToBeSent(
-      String currentlyActiveBpmnElementId, String targetMessage) {
+  List<String> determineMessagesFromBpmnElementIdToTargetMessage(
+      String bpmnElementId, String targetMessage) {
+    // TODO: currently package-private, so it can be better tested
     List<String> targetBpmnIdCandidates = determineBpmnElementIdsForMessage(targetMessage);
 
-    return findShortestPathForElementIds(currentlyActiveBpmnElementId, targetBpmnIdCandidates)
+    return findShortestPathForElementIds(
+            directedGraphWithSuccessorsPredecessors, bpmnElementId, targetBpmnIdCandidates)
         .stream()
         .map(this::getAssociatedMessageForBpmnElementId)
         .flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 
-  private BpmnModelInstance readModel(String pathBpmnFile) {
-    File file = new File(pathBpmnFile);
-    return Bpmn.readModelFromFile(file);
-  }
+  private DirectedGraphWithSuccessorsPredecessors<String> createGraph() {
 
-  private void createGraph() {
-
-    processAsGraph = new MyDirectedGraph<>();
+    DirectedGraphWithSuccessorsPredecessors<String> processAsGraph =
+        new DirectedGraphWithSuccessorsPredecessors<>();
 
     // Resolve parent process (starting point = StartEvent of process)
     Set<FlowNode> currentNodes =
@@ -152,9 +183,8 @@ public class BpmnModelService {
     LOG.debug("");
 
     // Replace Subprocesses
-    // Find subprocess
     subProcesses.stream()
-        .filter(subProcess -> !subProcess.triggeredByEvent())
+        .filter(subProcess -> !subProcess.triggeredByEvent()) // ignore event sub
         .forEach(
             subProcess -> {
               // Find startElement (Replacement1) of Subprocess
@@ -174,63 +204,34 @@ public class BpmnModelService {
               // Connect incoming edges with startEvent
               incomingToSubProcess.forEach(
                   incomingSequenceFlow ->
-                      addEdge(incomingSequenceFlow.getSource().getId(), startEvent.getId()));
+                      addEdge(
+                          processAsGraph,
+                          incomingSequenceFlow.getSource().getId(),
+                          startEvent.getId()));
               // Connect endEvent with outgoing edges
               endEvents.forEach(
                   endEvent -> {
-                    addEdge(endEvent.getId(), outgoingFromSubProcess.getTarget().getId());
+                    addEdge(
+                        processAsGraph,
+                        endEvent.getId(),
+                        outgoingFromSubProcess.getTarget().getId());
                     removeVertexAndAddReplacements(
-                        subProcess.getId(), Pair.of(startEvent.getId(), endEvent.getId()));
+                        processAsGraph,
+                        subProcess.getId(),
+                        Pair.of(startEvent.getId(), endEvent.getId()));
                   });
             });
 
-    LOG.debug("");
-    LOG.debug("=========== STATUS ===========");
-    LOG.debug("Subprocess should be replaced now");
-    LOG.debug("Next: Replace StartEvents");
-    LOG.debug("");
-    LOG.debug("");
-
-    // Replace StartEvents
+    // Remove Leftovers
     List<StartEvent> startEventsToBeRemoved = getStartEventsToBeRemoved();
-    removeFlowNodesFromGraph(startEventsToBeRemoved);
+    removeFlowNodesFromGraph(processAsGraph, startEventsToBeRemoved);
+    removeFlowNodesOfTypeFromGraph(processAsGraph, EndEvent.class);
+    removeFlowNodesOfTypeFromGraph(processAsGraph, Gateway.class);
+    removeFlowNodesOfTypeFromGraph(processAsGraph, Task.class);
 
-    LOG.debug("");
-    LOG.debug("=========== STATUS ===========");
-    LOG.debug("StartEvents should be replaced now");
-    LOG.debug("Next: Replace EndEvents");
-    LOG.debug("");
-    LOG.debug("");
+    LOG.info("Process has been successfully resolved.");
 
-    // Replace EndEvents
-    removeFlowNodesOfTypeFromGraph(EndEvent.class);
-
-    LOG.debug("");
-    LOG.debug("=========== STATUS ===========");
-    LOG.debug("EndEvents should be replaced now");
-    LOG.debug("Next: Replace Gateways");
-    LOG.debug("");
-    LOG.debug("");
-
-    // Replace Gateways
-    removeFlowNodesOfTypeFromGraph(Gateway.class);
-
-    LOG.debug("");
-    LOG.debug("=========== STATUS ===========");
-    LOG.debug("Gateways should be replaced now");
-    LOG.debug("Next: Replace Tasks");
-    LOG.debug("");
-    LOG.debug("");
-
-    // Replace
-    removeFlowNodesOfTypeFromGraph(Task.class);
-
-    LOG.debug("");
-    LOG.debug("=========== STATUS ===========");
-    LOG.debug("Tasks should be replaced now");
-    LOG.debug("");
-    LOG.debug("");
-    LOG.info("Process should now be fully transformed!");
+    return processAsGraph;
   }
 
   /**
@@ -254,7 +255,9 @@ public class BpmnModelService {
   }
 
   private void removeVertexAndAddReplacements(
-      String vertexToBeReplaced, Pair<String, String> replacement) {
+      DirectedGraphWithSuccessorsPredecessors<String> processAsGraph,
+      String vertexToBeReplaced,
+      Pair<String, String> replacement) {
     //        LOG.debug("Trying to Remove vertex: {}", vertexToBeReplaced);
     boolean vertexInGraph = processAsGraph.contains(vertexToBeReplaced);
 
@@ -271,15 +274,18 @@ public class BpmnModelService {
     addReplacement(vertexToBeReplaced, replacement);
   }
 
-  private <T extends FlowNode> void removeFlowNodesFromGraph(Collection<T> flowNodes) {
+  private <T extends FlowNode> void removeFlowNodesFromGraph(
+      DirectedGraphWithSuccessorsPredecessors<String> processAsGraph, Collection<T> flowNodes) {
     flowNodes.stream().map(FlowNode::getId).forEach(processAsGraph::removeVertexFromPath);
   }
 
-  private <T extends FlowNode> void removeFlowNodesOfTypeFromGraph(Class<T> FlowNodeType) {
-    removeFlowNodesFromGraph(modelInstance.getModelElementsByType(FlowNodeType));
+  private <T extends FlowNode> void removeFlowNodesOfTypeFromGraph(
+      DirectedGraphWithSuccessorsPredecessors<String> processAsGraph, Class<T> FlowNodeType) {
+    removeFlowNodesFromGraph(processAsGraph, modelInstance.getModelElementsByType(FlowNodeType));
   }
 
-  private void transformIntoGraph(Graph<String> graph, Set<FlowNode> currentNodes) {
+  private void transformIntoGraph(
+      DirectedGraphWithSuccessorsPredecessors<String> graph, Set<FlowNode> currentNodes) {
     Set<String> alreadyProcessed = new HashSet<>();
     currentNodes.stream()
         .map(FlowNode::getId)
@@ -298,7 +304,7 @@ public class BpmnModelService {
             LOG.debug("Adding Vertex {}", succeedingNode.getId());
             graph.addVertex(succeedingNode.getId());
           }
-          addEdge(currentNode.getId(), succeedingNode.getId());
+          addEdge(graph, currentNode.getId(), succeedingNode.getId());
         }
         alreadyProcessed.add(currentNode.getId());
       }
@@ -325,7 +331,9 @@ public class BpmnModelService {
   }
 
   private Path<String> findShortestPathForElementIds(
-      String currentlyActiveBpmnElementId, List<String> targetBpmnIdCandidates) {
+      DirectedGraphWithSuccessorsPredecessors<String> processAsGraph,
+      String currentlyActiveBpmnElementId,
+      List<String> targetBpmnIdCandidates) {
     Path<String> shortestPath =
         targetBpmnIdCandidates.stream()
             .map(
@@ -352,13 +360,14 @@ public class BpmnModelService {
             .min(Comparator.comparing(Path::size))
             .get();
 
-    LOG.info(
-        "Found shortest path: {}",
-        StringUtils.arrayToDelimitedString(shortestPath.toArray(), "->"));
+    LOG.info("Found shortest path: {}", StringUtils.join(shortestPath.toArray(), "->"));
     return shortestPath;
   }
 
-  private void addEdge(String sourceId, String targetId) {
+  private void addEdge(
+      DirectedGraphWithSuccessorsPredecessors<String> processAsGraph,
+      String sourceId,
+      String targetId) {
     //        LOG.debug("Calling addEdge w/ {} -> {}", sourceId, targetId);
     List<String> sourceIds = determineSourceIdsFromReplacements(sourceId);
     List<String> targetIds = determineTargetIdsFromReplacements(targetId);
@@ -407,5 +416,14 @@ public class BpmnModelService {
     current.getLeft().add(replacement.getLeft());
     current.getRight().add(replacement.getRight());
     replacements.put(vertexToBeReplaced, current);
+  }
+
+  private boolean isInEventbasedSubProcess(CatchEvent ce) {
+    ModelElementInstance parentElement = ce.getParentElement();
+    if (parentElement instanceof SubProcess) {
+      SubProcess asSubProcess = (SubProcess) parentElement;
+      return asSubProcess.triggeredByEvent();
+    }
+    return false;
   }
 }

@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.5.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0" camunda:diagramRelationId="d6e859f5-bbfc-469e-8597-f8f1bb97af6b">
   <bpmn:process id="deliver-parcel_uncontrolled" name="Deliver_Parcel" isExecutable="true">
-    <bpmn:intermediateCatchEvent id="Event_INTRANSIT" name="In transit">
+    <bpmn:intermediateCatchEvent id="Event_STATE1" name="state1">
       <bpmn:incoming>Flow_1v57045</bpmn:incoming>
       <bpmn:outgoing>Flow_0gjz6ru</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_00fgo50" messageRef="Message_3en9c2d" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:startEvent id="Event_ParcelStarted">
+    <bpmn:startEvent id="Event_Started">
       <bpmn:outgoing>Flow_1f91blq</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:intermediateCatchEvent id="Event_INDELIVERY" name="In delivery">
+    <bpmn:intermediateCatchEvent id="Event_STATE2" name="state 2">
       <bpmn:incoming>Flow_0uv9j2f</bpmn:incoming>
       <bpmn:incoming>Flow_1bpagiw</bpmn:incoming>
       <bpmn:outgoing>Flow_0ooqh69</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0mwqmgq" messageRef="Message_0rgcss6" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:intermediateCatchEvent id="Event_DELIVERED" name="Delivered">
+    <bpmn:intermediateCatchEvent id="Event_STATE3" name="STATE3">
       <bpmn:incoming>Flow_0gs8w1f</bpmn:incoming>
       <bpmn:outgoing>Flow_0gwf35i</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0z7co5f" messageRef="Message_16i96a0" />
@@ -25,17 +25,17 @@
       <bpmn:outgoing>Flow_0gs8w1f</bpmn:outgoing>
       <bpmn:outgoing>Flow_0pu3xo5</bpmn:outgoing>
     </bpmn:eventBasedGateway>
-    <bpmn:intermediateCatchEvent id="Event_NOTDELIVERED" name="Not delivered">
+    <bpmn:intermediateCatchEvent id="Event_STATE8" name="state 8">
       <bpmn:incoming>Flow_0pu3xo5</bpmn:incoming>
       <bpmn:outgoing>Flow_178u4sx</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_029ijgf" messageRef="Message_1ajgppj" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:intermediateCatchEvent id="Event_DELIVERED2" name="Delivered">
+    <bpmn:intermediateCatchEvent id="Event_STATE32" name="STATE3">
       <bpmn:incoming>Flow_0o7e8sx</bpmn:incoming>
       <bpmn:outgoing>Flow_133xt14</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_11mv7bo" messageRef="Message_16i96a0" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:exclusiveGateway id="Gateway_Pickup" name="Pickup?" default="Flow_1v57045">
+    <bpmn:exclusiveGateway id="Gateway_gdfgdfg" default="Flow_1v57045">
       <bpmn:incoming>Flow_1f91blq</bpmn:incoming>
       <bpmn:incoming>Flow_0pb87wo</bpmn:incoming>
       <bpmn:outgoing>Flow_1v57045</bpmn:outgoing>
@@ -47,12 +47,12 @@
       <bpmn:outgoing>Flow_14virb1</bpmn:outgoing>
       <bpmn:outgoing>Flow_0vce16n</bpmn:outgoing>
     </bpmn:eventBasedGateway>
-    <bpmn:intermediateCatchEvent id="Event_FinalBeforeSub2" name="Final">
+    <bpmn:intermediateCatchEvent id="Event_STATE6BeforeSub2" name="STATE6">
       <bpmn:incoming>Flow_0zolbjb</bpmn:incoming>
       <bpmn:outgoing>Flow_1of6w7q</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_1frrpbi" messageRef="Message_015dh9d" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:intermediateCatchEvent id="Event_INTRANSIT2" name="In transit">
+    <bpmn:intermediateCatchEvent id="Event_STATE12" name="state 2">
       <bpmn:incoming>Flow_14virb1</bpmn:incoming>
       <bpmn:outgoing>Flow_1bpagiw</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_041i2pp" messageRef="Message_3en9c2d" />
@@ -62,31 +62,31 @@
       <bpmn:incoming>Flow_0rlzv78</bpmn:incoming>
       <bpmn:outgoing>Flow_0uv9j2f</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:intermediateCatchEvent id="Event_DELIVERED3" name="Delivered">
+    <bpmn:intermediateCatchEvent id="Event_STATE33" name="STATE3">
       <bpmn:incoming>Flow_0vce16n</bpmn:incoming>
       <bpmn:outgoing>Flow_07nkf0i</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0ujtyn2" messageRef="Message_16i96a0" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:sequenceFlow id="Flow_1v57045" name="no" sourceRef="Gateway_Pickup" targetRef="Event_INTRANSIT" />
-    <bpmn:sequenceFlow id="Flow_0gjz6ru" sourceRef="Event_INTRANSIT" targetRef="Gateway_W" />
-    <bpmn:sequenceFlow id="Flow_1f91blq" sourceRef="Event_ParcelStarted" targetRef="Gateway_Pickup" />
-    <bpmn:sequenceFlow id="Flow_0uv9j2f" sourceRef="Gateway_W" targetRef="Event_INDELIVERY" />
-    <bpmn:sequenceFlow id="Flow_0ooqh69" sourceRef="Event_INDELIVERY" targetRef="Gateway_X" />
-    <bpmn:sequenceFlow id="Flow_0gs8w1f" sourceRef="Gateway_X" targetRef="Event_DELIVERED" />
-    <bpmn:sequenceFlow id="Flow_0pu3xo5" sourceRef="Gateway_X" targetRef="Event_NOTDELIVERED" />
-    <bpmn:sequenceFlow id="Flow_133xt14" sourceRef="Event_DELIVERED2" targetRef="Event_End2" />
-    <bpmn:sequenceFlow id="Flow_0zolbjb" sourceRef="Gateway_Z" targetRef="Event_FinalBeforeSub2" />
-    <bpmn:sequenceFlow id="Flow_14virb1" sourceRef="Gateway_Z" targetRef="Event_INTRANSIT2" />
-    <bpmn:sequenceFlow id="Flow_0vce16n" sourceRef="Gateway_Z" targetRef="Event_DELIVERED3" />
+    <bpmn:sequenceFlow id="Flow_1v57045" name="no" sourceRef="Gateway_gdfgdfg" targetRef="Event_STATE1" />
+    <bpmn:sequenceFlow id="Flow_0gjz6ru" sourceRef="Event_STATE1" targetRef="Gateway_W" />
+    <bpmn:sequenceFlow id="Flow_1f91blq" sourceRef="Event_Started" targetRef="Gateway_gdfgdfg" />
+    <bpmn:sequenceFlow id="Flow_0uv9j2f" sourceRef="Gateway_W" targetRef="Event_STATE2" />
+    <bpmn:sequenceFlow id="Flow_0ooqh69" sourceRef="Event_STATE2" targetRef="Gateway_X" />
+    <bpmn:sequenceFlow id="Flow_0gs8w1f" sourceRef="Gateway_X" targetRef="Event_STATE3" />
+    <bpmn:sequenceFlow id="Flow_0pu3xo5" sourceRef="Gateway_X" targetRef="Event_STATE8" />
+    <bpmn:sequenceFlow id="Flow_133xt14" sourceRef="Event_STATE32" targetRef="Event_End2" />
+    <bpmn:sequenceFlow id="Flow_0zolbjb" sourceRef="Gateway_Z" targetRef="Event_STATE6BeforeSub2" />
+    <bpmn:sequenceFlow id="Flow_14virb1" sourceRef="Gateway_Z" targetRef="Event_STATE12" />
+    <bpmn:sequenceFlow id="Flow_0vce16n" sourceRef="Gateway_Z" targetRef="Event_STATE33" />
     <bpmn:endEvent id="Event_End2">
       <bpmn:incoming>Flow_133xt14</bpmn:incoming>
       <bpmn:incoming>Flow_07nkf0i</bpmn:incoming>
       <bpmn:incoming>Flow_0gwf35i</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0nu2x2o" name="yes" sourceRef="Gateway_Pickup" targetRef="Event_FinalBeforeSub">
+    <bpmn:sequenceFlow id="Flow_0nu2x2o" name="yes" sourceRef="Gateway_gdfgdfg" targetRef="Event_STATE6BeforeSub">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=false</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:subProcess id="Activity_SubprocessPickup" name="Pickup">
+    <bpmn:subProcess id="Activity_SubprocessSTATE5" name="subprocess">
       <bpmn:incoming>Flow_1khamlm</bpmn:incoming>
       <bpmn:incoming>Flow_1of6w7q</bpmn:incoming>
       <bpmn:outgoing>Flow_0rlzv78</bpmn:outgoing>
@@ -96,63 +96,63 @@
       <bpmn:endEvent id="Event_EndSub">
         <bpmn:incoming>Flow_0dvnlk4</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:intermediateCatchEvent id="Event_INTRANSITSUBPROCESS" name="In transit">
+      <bpmn:intermediateCatchEvent id="Event_STATE1SUBPROCESS" name="state1">
         <bpmn:incoming>Flow_1phkdb6</bpmn:incoming>
         <bpmn:outgoing>Flow_0dvnlk4</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_0kec0b2" messageRef="Message_3en9c2d" />
       </bpmn:intermediateCatchEvent>
-      <bpmn:sequenceFlow id="Flow_0dvnlk4" sourceRef="Event_INTRANSITSUBPROCESS" targetRef="Event_EndSub" />
-      <bpmn:intermediateCatchEvent id="Event_INPICKUP" name="In pickup">
+      <bpmn:sequenceFlow id="Flow_0dvnlk4" sourceRef="Event_STATE1SUBPROCESS" targetRef="Event_EndSub" />
+      <bpmn:intermediateCatchEvent id="Event_STATE9" name="state 9">
         <bpmn:incoming>Flow_1evtjfc</bpmn:incoming>
         <bpmn:incoming>Flow_1dqbciu</bpmn:incoming>
         <bpmn:outgoing>Flow_0ckhnab</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_1731uc1" messageRef="Message_1021fr4" />
       </bpmn:intermediateCatchEvent>
-      <bpmn:sequenceFlow id="Flow_1evtjfc" sourceRef="Event_StartSub" targetRef="Event_INPICKUP" />
-      <bpmn:intermediateCatchEvent id="Event_NOTPICKEDUP" name="Not picked up">
+      <bpmn:sequenceFlow id="Flow_1evtjfc" sourceRef="Event_StartSub" targetRef="Event_STATE9" />
+      <bpmn:intermediateCatchEvent id="Event_STATE10" name="state 10">
         <bpmn:incoming>Flow_0xqfhbc</bpmn:incoming>
         <bpmn:outgoing>Flow_1dqbciu</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_1fsd0jl" messageRef="Message_0ifd256" />
       </bpmn:intermediateCatchEvent>
-      <bpmn:sequenceFlow id="Flow_1dqbciu" sourceRef="Event_NOTPICKEDUP" targetRef="Event_INPICKUP" />
+      <bpmn:sequenceFlow id="Flow_1dqbciu" sourceRef="Event_STATE10" targetRef="Event_STATE9" />
       <bpmn:eventBasedGateway id="Gateway_P" name="P">
         <bpmn:incoming>Flow_0ckhnab</bpmn:incoming>
         <bpmn:outgoing>Flow_1phkdb6</bpmn:outgoing>
         <bpmn:outgoing>Flow_0xqfhbc</bpmn:outgoing>
         <bpmn:outgoing>Flow_04jvytk</bpmn:outgoing>
       </bpmn:eventBasedGateway>
-      <bpmn:sequenceFlow id="Flow_1phkdb6" sourceRef="Gateway_P" targetRef="Event_INTRANSITSUBPROCESS" />
-      <bpmn:sequenceFlow id="Flow_0xqfhbc" sourceRef="Gateway_P" targetRef="Event_NOTPICKEDUP" />
-      <bpmn:sequenceFlow id="Flow_0ckhnab" sourceRef="Event_INPICKUP" targetRef="Gateway_P" />
-      <bpmn:intermediateCatchEvent id="Event_INTRANSITSUBPROCESS2" name="In transit&#10;(replica)">
+      <bpmn:sequenceFlow id="Flow_1phkdb6" sourceRef="Gateway_P" targetRef="Event_STATE1SUBPROCESS" />
+      <bpmn:sequenceFlow id="Flow_0xqfhbc" sourceRef="Gateway_P" targetRef="Event_STATE10" />
+      <bpmn:sequenceFlow id="Flow_0ckhnab" sourceRef="Event_STATE9" targetRef="Gateway_P" />
+      <bpmn:intermediateCatchEvent id="Event_STATE1SUBPROCESS2" name="in state1&#10;(replica)">
         <bpmn:incoming>Flow_04jvytk</bpmn:incoming>
         <bpmn:outgoing>Flow_1see3e7</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_07j38fz" messageRef="Message_3en9c2d" />
       </bpmn:intermediateCatchEvent>
-      <bpmn:sequenceFlow id="Flow_04jvytk" sourceRef="Gateway_P" targetRef="Event_INTRANSITSUBPROCESS2" />
+      <bpmn:sequenceFlow id="Flow_04jvytk" sourceRef="Gateway_P" targetRef="Event_STATE1SUBPROCESS2" />
       <bpmn:endEvent id="Event_0gttxic">
         <bpmn:incoming>Flow_1see3e7</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="Flow_1see3e7" sourceRef="Event_INTRANSITSUBPROCESS2" targetRef="Event_0gttxic" />
+      <bpmn:sequenceFlow id="Flow_1see3e7" sourceRef="Event_STATE1SUBPROCESS2" targetRef="Event_0gttxic" />
     </bpmn:subProcess>
-    <bpmn:sequenceFlow id="Flow_0rlzv78" sourceRef="Activity_SubprocessPickup" targetRef="Gateway_W" />
-    <bpmn:sequenceFlow id="Flow_1khamlm" sourceRef="Event_FinalBeforeSub" targetRef="Activity_SubprocessPickup" />
-    <bpmn:intermediateCatchEvent id="Event_FinalBeforeSub" name="Final">
+    <bpmn:sequenceFlow id="Flow_0rlzv78" sourceRef="Activity_SubprocessSTATE5" targetRef="Gateway_W" />
+    <bpmn:sequenceFlow id="Flow_1khamlm" sourceRef="Event_STATE6BeforeSub" targetRef="Activity_SubprocessSTATE5" />
+    <bpmn:intermediateCatchEvent id="Event_STATE6BeforeSub" name="STATE6">
       <bpmn:incoming>Flow_0nu2x2o</bpmn:incoming>
       <bpmn:outgoing>Flow_1khamlm</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_1bjchg0" messageRef="Message_015dh9d" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:sequenceFlow id="Flow_1bpagiw" sourceRef="Event_INTRANSIT2" targetRef="Event_INDELIVERY" />
-    <bpmn:sequenceFlow id="Flow_07nkf0i" sourceRef="Event_DELIVERED3" targetRef="Event_End2" />
-    <bpmn:sequenceFlow id="Flow_0gwf35i" sourceRef="Event_DELIVERED" targetRef="Event_End2" />
-    <bpmn:sequenceFlow id="Flow_1of6w7q" sourceRef="Event_FinalBeforeSub2" targetRef="Activity_SubprocessPickup" />
+    <bpmn:sequenceFlow id="Flow_1bpagiw" sourceRef="Event_STATE12" targetRef="Event_STATE2" />
+    <bpmn:sequenceFlow id="Flow_07nkf0i" sourceRef="Event_STATE33" targetRef="Event_End2" />
+    <bpmn:sequenceFlow id="Flow_0gwf35i" sourceRef="Event_STATE3" targetRef="Event_End2" />
+    <bpmn:sequenceFlow id="Flow_1of6w7q" sourceRef="Event_STATE6BeforeSub2" targetRef="Activity_SubprocessSTATE5" />
     <bpmn:subProcess id="Activity_05qfn7s">
       <bpmn:incoming>Flow_178u4sx</bpmn:incoming>
       <bpmn:outgoing>Flow_07dx5ka</bpmn:outgoing>
       <bpmn:startEvent id="Event_1ovf2qh">
         <bpmn:outgoing>Flow_02cwh3v</bpmn:outgoing>
       </bpmn:startEvent>
-      <bpmn:intermediateCatchEvent id="Event_DELIVEREDPS" name="Delivered PS">
+      <bpmn:intermediateCatchEvent id="Event_STATE4" name="state 4">
         <bpmn:incoming>Flow_06rivv4</bpmn:incoming>
         <bpmn:outgoing>Flow_1wkt92u</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_0jans7l" messageRef="Message_26d1kva" />
@@ -162,43 +162,43 @@
         <bpmn:outgoing>Flow_06rivv4</bpmn:outgoing>
         <bpmn:outgoing>Flow_1h3u9i3</bpmn:outgoing>
       </bpmn:eventBasedGateway>
-      <bpmn:intermediateCatchEvent id="Event_INWAREHOUSE" name="In warehouse">
+      <bpmn:intermediateCatchEvent id="Event_STATE7" name="state 7">
         <bpmn:incoming>Flow_1h3u9i3</bpmn:incoming>
         <bpmn:outgoing>Flow_18g9sbn</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_1o4uebo" messageRef="Message_32qfe2t" />
       </bpmn:intermediateCatchEvent>
-      <bpmn:sequenceFlow id="Flow_06rivv4" sourceRef="Gateway_Y" targetRef="Event_DELIVEREDPS" />
-      <bpmn:sequenceFlow id="Flow_1h3u9i3" sourceRef="Gateway_Y" targetRef="Event_INWAREHOUSE" />
+      <bpmn:sequenceFlow id="Flow_06rivv4" sourceRef="Gateway_Y" targetRef="Event_STATE4" />
+      <bpmn:sequenceFlow id="Flow_1h3u9i3" sourceRef="Gateway_Y" targetRef="Event_STATE7" />
       <bpmn:sequenceFlow id="Flow_02cwh3v" sourceRef="Event_1ovf2qh" targetRef="Gateway_Y" />
       <bpmn:endEvent id="Event_1fghuox">
         <bpmn:incoming>Flow_18g9sbn</bpmn:incoming>
         <bpmn:incoming>Flow_1wkt92u</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:sequenceFlow id="Flow_18g9sbn" sourceRef="Event_INWAREHOUSE" targetRef="Event_1fghuox" />
-      <bpmn:sequenceFlow id="Flow_1wkt92u" sourceRef="Event_DELIVEREDPS" targetRef="Event_1fghuox" />
+      <bpmn:sequenceFlow id="Flow_18g9sbn" sourceRef="Event_STATE7" targetRef="Event_1fghuox" />
+      <bpmn:sequenceFlow id="Flow_1wkt92u" sourceRef="Event_STATE4" targetRef="Event_1fghuox" />
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="Flow_07dx5ka" sourceRef="Activity_05qfn7s" targetRef="Gateway_1irldsx" />
-    <bpmn:sequenceFlow id="Flow_178u4sx" sourceRef="Event_NOTDELIVERED" targetRef="Activity_05qfn7s" />
+    <bpmn:sequenceFlow id="Flow_178u4sx" sourceRef="Event_STATE8" targetRef="Activity_05qfn7s" />
     <bpmn:exclusiveGateway id="Gateway_1irldsx" default="Flow_08et4t5">
       <bpmn:incoming>Flow_07dx5ka</bpmn:incoming>
       <bpmn:outgoing>Flow_0o7e8sx</bpmn:outgoing>
       <bpmn:outgoing>Flow_08et4t5</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_0o7e8sx" sourceRef="Gateway_1irldsx" targetRef="Event_DELIVERED2">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=lastEvent = "DeliveredPS"</bpmn:conditionExpression>
+    <bpmn:sequenceFlow id="Flow_0o7e8sx" sourceRef="Gateway_1irldsx" targetRef="Event_STATE32">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=lastEvent = "STATE4"</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_08et4t5" sourceRef="Gateway_1irldsx" targetRef="Gateway_Z" />
     <bpmn:startEvent id="Event_00ud26c">
       <bpmn:outgoing>Flow_0pb87wo</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_0pb87wo" sourceRef="Event_00ud26c" targetRef="Gateway_Pickup" />
+    <bpmn:sequenceFlow id="Flow_0pb87wo" sourceRef="Event_00ud26c" targetRef="Gateway_gdfgdfg" />
   </bpmn:process>
   <bpmn:message id="Message_0rp5u92" name="PREADVICE">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=transactionId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_3en9c2d" name="INTRANSIT">
+  <bpmn:message id="Message_3en9c2d" name="STATE1">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
@@ -208,13 +208,13 @@
       <zeebe:subscription correlationKey="=transactionId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_3lj691l" name="PLANNEDPICKUP" />
-  <bpmn:message id="Message_1021fr4" name="INPICKUP">
+  <bpmn:message id="Message_3lj691l" name="PLANNEDSTATE5" />
+  <bpmn:message id="Message_1021fr4" name="STATE9">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_0ifd256" name="NOTPICKEDUP">
+  <bpmn:message id="Message_0ifd256" name="STATE10">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
@@ -224,57 +224,57 @@
       <zeebe:subscription correlationKey="=transactionId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_0rgcss6" name="INDELIVERY">
+  <bpmn:message id="Message_0rgcss6" name="STATE2">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_1ajgppj" name="NOTDELIVERED">
+  <bpmn:message id="Message_1ajgppj" name="STATE8">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_26d1kva" name="DELIVEREDPS">
+  <bpmn:message id="Message_26d1kva" name="STATE4">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_16i96a0" name="DELIVERED">
+  <bpmn:message id="Message_16i96a0" name="STATE3">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_32qfe2t" name="INWAREHOUSE">
+  <bpmn:message id="Message_32qfe2t" name="STATE7">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="Message_015dh9d" name="FINAL">
+  <bpmn:message id="Message_015dh9d" name="STATE6">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=parcelId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="deliver-parcel_uncontrolled">
-      <bpmndi:BPMNShape id="Event_0j6th2j_di" bpmnElement="Event_INTRANSIT">
+      <bpmndi:BPMNShape id="Event_0j6th2j_di" bpmnElement="Event_STATE1">
         <dc:Bounds x="632" y="112" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="630" y="155" width="43" height="14" />
+          <dc:Bounds x="637" y="155" width="30" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1gz67um_di" bpmnElement="Event_ParcelStarted">
+      <bpmndi:BPMNShape id="Event_1gz67um_di" bpmnElement="Event_Started">
         <dc:Bounds x="132" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="282" y="203" width="37" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1iulvuz_di" bpmnElement="Event_INDELIVERY">
+      <bpmndi:BPMNShape id="Event_1iulvuz_di" bpmnElement="Event_STATE2">
         <dc:Bounds x="892" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="885" y="203" width="51" height="14" />
+          <dc:Bounds x="894" y="203" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0jjrrsu_di" bpmnElement="Event_DELIVERED">
+      <bpmndi:BPMNShape id="Event_0jjrrsu_di" bpmnElement="Event_STATE3">
         <dc:Bounds x="1052" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1046" y="266" width="47" height="14" />
@@ -286,22 +286,22 @@
           <dc:Bounds x="986" y="185" width="8" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_159q374_di" bpmnElement="Event_NOTDELIVERED">
+      <bpmndi:BPMNShape id="Event_159q374_di" bpmnElement="Event_STATE8">
         <dc:Bounds x="1052" y="332" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1038" y="375" width="66" height="14" />
+          <dc:Bounds x="1055" y="375" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_10bsgw0_di" bpmnElement="Event_DELIVERED2">
+      <bpmndi:BPMNShape id="Event_10bsgw0_di" bpmnElement="Event_STATE32">
         <dc:Bounds x="1582" y="332" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1577" y="375" width="47" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_09b6z86_di" bpmnElement="Gateway_Pickup" isMarkerVisible="true">
+      <bpmndi:BPMNShape id="Gateway_09b6z86_di" bpmnElement="Gateway_gdfgdfg" isMarkerVisible="true">
         <dc:Bounds x="215" y="215" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="251" y="213" width="40" height="14" />
+          <dc:Bounds x="248" y="185" width="47" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_18jfn84_di" bpmnElement="Gateway_Z">
@@ -310,16 +310,16 @@
           <dc:Bounds x="1301" y="543" width="8" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1db6sxr_di" bpmnElement="Event_FinalBeforeSub2">
+      <bpmndi:BPMNShape id="Event_1db6sxr_di" bpmnElement="Event_STATE6BeforeSub2">
         <dc:Bounds x="1266" y="582" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1273" y="625" width="25" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1cdl6ex_di" bpmnElement="Event_INTRANSIT2">
+      <bpmndi:BPMNShape id="Event_1cdl6ex_di" bpmnElement="Event_STATE12">
         <dc:Bounds x="1052" y="500" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1048" y="543" width="44" height="14" />
+          <dc:Bounds x="1053" y="543" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0hth2c9_di" bpmnElement="Gateway_W" isMarkerVisible="true">
@@ -328,7 +328,7 @@
           <dc:Bounds x="824" y="213" width="11" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1lh476v_di" bpmnElement="Event_DELIVERED3">
+      <bpmndi:BPMNShape id="Event_1lh476v_di" bpmnElement="Event_STATE33">
         <dc:Bounds x="1494" y="500" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1488" y="543" width="47" height="14" />
@@ -337,7 +337,7 @@
       <bpmndi:BPMNShape id="Event_1dxmn7i_di" bpmnElement="Event_End2">
         <dc:Bounds x="1644" y="332" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_07wxyq6_di" bpmnElement="Activity_SubprocessPickup" isExpanded="true">
+      <bpmndi:BPMNShape id="Activity_07wxyq6_di" bpmnElement="Activity_SubprocessSTATE5" isExpanded="true">
         <dc:Bounds x="382" y="190" width="377" height="177" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
@@ -347,22 +347,22 @@
       <bpmndi:BPMNShape id="Event_0htnsyb_di" bpmnElement="Event_EndSub">
         <dc:Bounds x="703" y="222" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_01zob64_di" bpmnElement="Event_INTRANSITSUBPROCESS">
+      <bpmndi:BPMNShape id="Event_01zob64_di" bpmnElement="Event_STATE1SUBPROCESS">
         <dc:Bounds x="633" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="631" y="265" width="43" height="14" />
+          <dc:Bounds x="638" y="265" width="30" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0sglrxr_di" bpmnElement="Event_INPICKUP">
+      <bpmndi:BPMNShape id="Event_0sglrxr_di" bpmnElement="Event_STATE9">
         <dc:Bounds x="472" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="467" y="198" width="45" height="14" />
+          <dc:Bounds x="473" y="198" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0udpqnj_di" bpmnElement="Event_NOTPICKEDUP">
+      <bpmndi:BPMNShape id="Event_0udpqnj_di" bpmnElement="Event_STATE10">
         <dc:Bounds x="553" y="304" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="537" y="343" width="68" height="14" />
+          <dc:Bounds x="551" y="343" width="40" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_1xrkeeg_di" bpmnElement="Gateway_P">
@@ -371,7 +371,7 @@
           <dc:Bounds x="546" y="254" width="8" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_03vfem8" bpmnElement="Event_INTRANSITSUBPROCESS2">
+      <bpmndi:BPMNShape id="BPMNShape_03vfem8" bpmnElement="Event_STATE1SUBPROCESS2">
         <dc:Bounds x="633" y="292" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="631" y="335" width="44" height="27" />
@@ -413,7 +413,7 @@
         <di:waypoint x="669" y="310" />
         <di:waypoint x="703" y="310" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Event_1gz5mgw_di" bpmnElement="Event_FinalBeforeSub">
+      <bpmndi:BPMNShape id="Event_1gz5mgw_di" bpmnElement="Event_STATE6BeforeSub">
         <dc:Bounds x="282" y="222" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="289" y="265" width="25" height="14" />
@@ -425,10 +425,10 @@
       <bpmndi:BPMNShape id="Event_1ovf2qh_di" bpmnElement="Event_1ovf2qh">
         <dc:Bounds x="1139" y="332" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1azphfv_di" bpmnElement="Event_DELIVEREDPS">
+      <bpmndi:BPMNShape id="Event_1azphfv_di" bpmnElement="Event_STATE4">
         <dc:Bounds x="1301" y="292" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1287" y="335" width="65" height="14" />
+          <dc:Bounds x="1303" y="335" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_01t6tsa_di" bpmnElement="Gateway_Y">
@@ -437,10 +437,10 @@
           <dc:Bounds x="1274" y="343" width="8" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1xsbc6f_di" bpmnElement="Event_INWAREHOUSE">
+      <bpmndi:BPMNShape id="Event_1xsbc6f_di" bpmnElement="Event_STATE7">
         <dc:Bounds x="1301" y="372" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1295" y="410" width="67" height="14" />
+          <dc:Bounds x="1312" y="410" width="34" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1fghuox_di" bpmnElement="Event_1fghuox">

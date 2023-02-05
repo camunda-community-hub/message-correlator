@@ -1,156 +1,187 @@
 package org.camunda.community.messagecorrelator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.ZeebeFuture;
+import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
 import io.camunda.zeebe.client.api.response.PublishMessageResponse;
+import io.camunda.zeebe.client.api.worker.JobWorker;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 
 public class ZeebeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZeebeService.class);
-  private final ObjectMapper objectMapper;
   private final BpmnModelService bpmnModelService;
-  private final ZeebeClientWrapper zeebeClientWrapper;
+  private final ObjectMapper objectMapper;
+  private final ZeebeClient zeebeClient;
+  private final String jobTypePrefix;
+  private final String syncMessage;
+  private final String messagesProcessVar;
 
-  public ZeebeService(
-      ZeebeClientWrapper zeebeClientWrapper,
-      BpmnModelService bpmnModelService,
-      ObjectMapper objectMapper) {
-    this.zeebeClientWrapper = zeebeClientWrapper;
-    this.bpmnModelService = bpmnModelService;
-    this.objectMapper = objectMapper;
+  public ZeebeService(ZeebeClient zeebeClient) throws ConfigurationException {
+    // resolve properties
+    PropertiesConfiguration config = new PropertiesConfiguration();
+    config.load("application.properties");
+
+    this.syncMessage = config.getString("bpmn.syncMessage");
+    this.jobTypePrefix = config.getString("bpmn.jobTypePrefix");
+    String messagesProcessVarFromConfig = config.getString("bpmn.messagesProcessVar");
+    this.messagesProcessVar = Objects.requireNonNullElse(messagesProcessVarFromConfig, "messages");
+
+    String bpmnPath = config.getString("bpmn.path");
+    this.bpmnModelService = new BpmnModelService(bpmnPath);
+    this.zeebeClient = zeebeClient;
+    this.objectMapper = new ObjectMapper();
   }
 
-  public ZeebeFuture<PublishMessageResponse> startProcess(
-      String correlationId, String message, Map<String, Object> processVariables) {
-    return zeebeClientWrapper.publishMessage(correlationId, message, processVariables);
+  public ZeebeFuture<PublishMessageResponse> startProcessViaMessage(
+      String message, String correlationId, Map<String, Object> additionalProcessVariables) {
+    return zeebeClient
+        .newPublishMessageCommand()
+        .messageName(message)
+        .correlationKey(correlationId)
+        .variables(additionalProcessVariables)
+        .send();
   }
 
-  public void sendMessage(String parcelId, MessageBody messageBody) {
-    // get already processed messages
-    Map<String, Object> processVariables = zeebeClientWrapper.getProcessVariables(parcelId).block();
+  public ZeebeFuture<ProcessInstanceEvent> startProcessViaProcessDefinitionKey(
+      long processDefinitionKey, Map<String, Object> additionalProcessVariables) {
+    return zeebeClient
+        .newCreateInstanceCommand()
+        .processDefinitionKey(processDefinitionKey)
+        .variables(additionalProcessVariables)
+        .send();
+  }
 
-    // TODO: refactor collections handling
-    Map<String, List<Map<String, Object>>> messagesMapAsMap =
-        (Map<String, List<Map<String, Object>>>) processVariables.get("messages");
-    Map<String, List<MessageBody>> messagesMap = new HashMap<>();
+  public ZeebeFuture<ProcessInstanceEvent> startProcessViaBpmnProcessId(
+      String bpmnProcessId, int version, Map<String, Object> additionalProcessVariables) {
+    return zeebeClient
+        .newCreateInstanceCommand()
+        .bpmnProcessId(bpmnProcessId)
+        .version(version)
+        .variables(additionalProcessVariables)
+        .send();
+  }
 
-    messagesMapAsMap.forEach(
-        (k, v) -> {
-          v.forEach(
-              messageAsObject -> {
-                MessageBody asMessageBody =
-                    objectMapper.convertValue(messageAsObject, MessageBody.class);
+  /** starts latest version */
+  public ZeebeFuture<ProcessInstanceEvent> startProcessViaBpmnProcessId(
+      String bpmnProcessId, Map<String, Object> additionalProcessVariables) {
+    return zeebeClient
+        .newCreateInstanceCommand()
+        .bpmnProcessId(bpmnProcessId)
+        .latestVersion()
+        .variables(additionalProcessVariables)
+        .send();
+  }
 
-                List<MessageBody> messageBodies = messagesMap.get(k);
-                if (messageBodies == null || messageBodies.isEmpty()) {
-                  messagesMap.put(k, Arrays.asList(asMessageBody));
-                } else {
-                  List<MessageBody> alreadyKnownMessageBodies = new ArrayList<>(messagesMap.get(k));
-                  alreadyKnownMessageBodies.add(asMessageBody);
-                  messagesMap.put(k, alreadyKnownMessageBodies);
-                }
-              });
-        });
+  /**
+   * @param messageBody
+   * @param id
+   * @param additionalProcessVars
+   * @return
+   */
+  public ZeebeFuture<PublishMessageResponse> sendArbitraryMessage(
+      MessageBody messageBody, String id, Map<String, Object> additionalProcessVars) {
+    // get process variables to be able to infer current state in the engine
+    Map<String, Object> processVariables = getProcessVariables(id).block();
+    MessageBody lastProcessedMessageForId = extractLastProcessedMessageForId(id, processVariables);
 
-    MessageBody mostRecent = getMostRecentMessage(parcelId, messagesMap);
-    if (messageBody.getDate().before(mostRecent.getDate())) {
+    if (messageBody.getDate().before(lastProcessedMessageForId.getDate())) {
       // do nothing, if we have already processed a more recent message
       LOG.info(
-          "Already have processed msg={} with date={}, so not gonna process msg={} with physicalDate={}",
-          mostRecent.getMessage(),
-          mostRecent.getDate(),
+          "Already have processed msg={} with date={}, so not gonna process msg={} with date={}",
+          lastProcessedMessageForId.getMessage(),
+          lastProcessedMessageForId.getDate(),
           messageBody.getMessage(),
           messageBody.getDate());
-      return;
+      return null;
     }
 
-    // get bpmnElementId of last completed element
-    // we have: [0]: most recent message, [n-1]: first received message (PREADVICE)
-    List<String> bpmnElementIdCandidates =
-        bpmnModelService.determineBpmnElementIdsForMessage(mostRecent.getMessage());
-    String lastCompletedBpmnElementId =
-        bpmnElementIdCandidates.get(
-            0); // as all bpmnElementIdCandidates will lead to the same following event, take first
-    // (could be any)
-
-    // get messages to-be-sent
-    List<String> messagesToBeSent =
+    // determine messages to send
+    List<String> messagesSend =
         bpmnModelService
-            .determineMessagesToBeSent(lastCompletedBpmnElementId, messageBody.getMessage())
+            .determineMessagesToSend(lastProcessedMessageForId, messageBody.getMessage())
             .stream()
             .map(String::valueOf)
             .collect(Collectors.toList());
-    messagesToBeSent.remove(0); // remove first, as this has already been completed.
-    LOG.info(
-        "Going to send Messages ={}",
-        StringUtils.join(
-            messagesToBeSent.stream().map(String::valueOf).collect(Collectors.toList())));
 
-    // actually send messages
-    sendMessages(parcelId, messageBody, messagesToBeSent, processVariables);
-  }
+    LOG.debug("Going to send Messages ={}", messagesSend);
 
-  /** Could also be done via Operate */
-  MessageBody getMostRecentMessage(
-      String parcelId, Map<String, List<MessageBody>> existingMessagesInProcessVars) {
-    // always get the existing messages for ALL (messages before MI) and for parcelId
-    List<MessageBody> existingMessagesInProcessVarsForALL =
-        existingMessagesInProcessVars.get(ProcessConstants.ALL);
+    // pass additionalProcessVars through
+    processVariables.putAll(additionalProcessVars);
 
-    List<MessageBody> messagesForAllAndForParcelId =
-        new ArrayList<>(existingMessagesInProcessVarsForALL);
-    // if messages related to parcelId already exist, pass them through
-    if (existingMessagesInProcessVars.containsKey(parcelId)) {
-      messagesForAllAndForParcelId.addAll(existingMessagesInProcessVars.get(parcelId));
-    }
-
-    Collections.sort(messagesForAllAndForParcelId);
-    return messagesForAllAndForParcelId.get(0);
-  }
-
-  private void sendMessages(
-      String parcelId,
-      MessageBody messageBody,
-      List<String> messagesToBeSent,
-      Map<String, Object> processVariables) {
-    int numberOfMessagesToBeSent = messagesToBeSent.size();
-    int messageSentCounter = 0;
-    for (String mb : messagesToBeSent) {
-      if (messageSentCounter < numberOfMessagesToBeSent - 1) {
-        MessageBody syntheticMessageBody = inferSyntheticMessageBody(messageBody, mb);
-        addMessageToProcessVars(parcelId, syntheticMessageBody, processVariables);
-
-        LOG.info("Publishing synthetic message={} without processVars", mb);
-        zeebeClientWrapper.publishMessage(parcelId, mb);
+    ZeebeFuture<PublishMessageResponse> response = null;
+    for (int index = 0; index < messagesSend.size(); index++) {
+      String messageString = messagesSend.get(index);
+      if (index < messagesSend.size() - 1) {
+        MessageBody syntheticMessageBody = inferSyntheticMessageBody(messageBody, messageString);
+        addMessageToProcessVars(id, syntheticMessageBody, processVariables);
       } else {
-        addMessageToProcessVars(parcelId, messageBody, processVariables);
-
-        LOG.info("Publishing message={} (last one) with processVars", mb);
-        zeebeClientWrapper.publishMessage(parcelId, mb, processVariables);
+        addMessageToProcessVars(id, messageBody, processVariables);
       }
-      messageSentCounter++;
+      LOG.info("Publishing message={} with processVars={}", messageString, processVariables);
+      response =
+          zeebeClient
+              .newPublishMessageCommand()
+              .messageName(messageString)
+              .correlationKey(id)
+              .variables(processVariables)
+              .send();
     }
+    return response;
   }
 
-  // TODO: refactor collections handling
+  private Mono<Map<String, Object>> getProcessVariables(String parcelId) {
+    Mono<Map<String, Object>> processVariables =
+        Mono.create(
+            sink -> {
+              String jobType = jobTypePrefix + "_" + parcelId;
+              JobWorker worker =
+                  zeebeClient
+                      .newWorker()
+                      .jobType(jobType)
+                      .handler(
+                          (client, job) -> {
+                            sink.success(job.getVariablesAsMap()); // TODO smaller scope
+                            client.newCompleteCommand(job).send();
+                          })
+                      .fetchVariables()
+                      .name(jobType)
+                      .open();
+              sink.onDispose(worker::close);
+            });
+
+    zeebeClient.newPublishMessageCommand().messageName(syncMessage).correlationKey(parcelId).send();
+
+    return processVariables;
+  }
+
+  // if process vars == null or messages can't be found or message for id can't be found ->
+  // something is wrong
+  private MessageBody extractLastProcessedMessageForId(
+      String parcelId, Map<String, Object> processVariables) {
+    Map<String, LinkedHashMap<String, String>> messagesMap =
+        (Map<String, LinkedHashMap<String, String>>) processVariables.get(messagesProcessVar);
+    LinkedHashMap stringStringLinkedHashMap = messagesMap.get(parcelId);
+    MessageBody lastProcessedMessageForParcelId =
+        objectMapper.convertValue(stringStringLinkedHashMap, MessageBody.class);
+    return lastProcessedMessageForParcelId;
+  }
+
   private void addMessageToProcessVars(
       String parcelId, MessageBody messageBody, Map<String, Object> processVariables) {
-    Map<String, Object> messages = (Map<String, Object>) processVariables.get("messages");
-
+    Map<String, MessageBody> messages =
+        (Map<String, MessageBody>) processVariables.get(messagesProcessVar);
     if (messages == null) {
       messages = new HashMap<>();
     }
-    if (!messages.containsKey(parcelId)) {
-      messages.put(parcelId, new ArrayList<>(Arrays.asList(messageBody)));
-    } else {
-      List<MessageBody> messageBodies = (List<MessageBody>) messages.get(parcelId);
-      messageBodies.addAll(new ArrayList<>(Arrays.asList(messageBody)));
-    }
+    messages.put(parcelId, messageBody);
   }
 
   /**

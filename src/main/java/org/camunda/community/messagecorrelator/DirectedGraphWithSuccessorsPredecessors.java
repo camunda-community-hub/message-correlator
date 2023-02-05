@@ -7,10 +7,10 @@ import java.util.Set;
 import space.earlygrey.simplegraphs.Connection;
 import space.earlygrey.simplegraphs.DirectedGraph;
 
-public class MyDirectedGraph<V> extends DirectedGraph<V> {
+class DirectedGraphWithSuccessorsPredecessors<V> extends DirectedGraph<V> {
 
-  private Map<V, Set<V>> successors = new HashMap<>();
-  private Map<V, Set<V>> predecessors = new HashMap<>();
+  private final Map<V, Set<V>> successors = new HashMap<>();
+  private final Map<V, Set<V>> predecessors = new HashMap<>();
 
   public boolean removeVertexFromPath(V vertex) {
     predecessors
