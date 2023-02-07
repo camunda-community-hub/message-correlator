@@ -88,7 +88,7 @@ public class ZeebeService {
   public ZeebeFuture<PublishMessageResponse> sendArbitraryMessage(
       MessageBody messageBody, String id, Map<String, Object> additionalProcessVars) {
     // get process variables to be able to infer current state in the engine
-    Map<String, Object> processVariables = getProcessVariables(id).block();
+    Map<String, Object> processVariables = getProcessVariables(id).block(); // TODO resolve blocking code
     MessageBody lastProcessedMessageForId = extractLastProcessedMessageForId(id, processVariables);
 
     if (messageBody.getDate().before(lastProcessedMessageForId.getDate())) {
