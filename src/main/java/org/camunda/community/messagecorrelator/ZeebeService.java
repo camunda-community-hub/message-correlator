@@ -85,55 +85,60 @@ public class ZeebeService {
    * @param additionalProcessVars
    * @return
    */
-  public ZeebeFuture<PublishMessageResponse> sendArbitraryMessage(
+  public Mono<Map<String, Object>> sendArbitraryMessage(
       MessageBody messageBody, String id, Map<String, Object> additionalProcessVars) {
     // get process variables to be able to infer current state in the engine
-    Map<String, Object> processVariables = getProcessVariables(id).block(); // TODO resolve blocking code
-    MessageBody lastProcessedMessageForId = extractLastProcessedMessageForId(id, processVariables);
+    return getProcessVariables(id)
+        .doOnSuccess(
+            processVariables -> {
+              MessageBody lastProcessedMessageForId =
+                  extractLastProcessedMessageForId(id, processVariables);
 
-    if (messageBody.getDate().before(lastProcessedMessageForId.getDate())) {
-      // do nothing, if we have already processed a more recent message
-      LOG.info(
-          "Already have processed msg={} with date={}, so not gonna process msg={} with date={}",
-          lastProcessedMessageForId.getMessage(),
-          lastProcessedMessageForId.getDate(),
-          messageBody.getMessage(),
-          messageBody.getDate());
-      return null;
-    }
+              if (messageBody.getDate().before(lastProcessedMessageForId.getDate())) {
+                // do nothing, if we have already processed a more recent message
+                LOG.info(
+                    "Already have processed msg={} with date={}, so not gonna process msg={} with date={}",
+                    lastProcessedMessageForId.getMessage(),
+                    lastProcessedMessageForId.getDate(),
+                    messageBody.getMessage(),
+                    messageBody.getDate());
+                return;
+              }
 
-    // determine messages to send
-    List<String> messagesSend =
-        bpmnModelService
-            .determineMessagesToSend(lastProcessedMessageForId, messageBody.getMessage())
-            .stream()
-            .map(String::valueOf)
-            .collect(Collectors.toList());
+              // determine messages to send
+              List<String> messagesToSend =
+                  bpmnModelService
+                      .determineMessagesToSend(lastProcessedMessageForId, messageBody.getMessage())
+                      .stream()
+                      .map(String::valueOf)
+                      .collect(Collectors.toList());
+              LOG.debug("Going to send Messages={}", messagesToSend);
 
-    LOG.debug("Going to send Messages ={}", messagesSend);
+              // pass additionalProcessVars through
+              processVariables.putAll(additionalProcessVars);
 
-    // pass additionalProcessVars through
-    processVariables.putAll(additionalProcessVars);
-
-    ZeebeFuture<PublishMessageResponse> response = null;
-    for (int index = 0; index < messagesSend.size(); index++) {
-      String messageString = messagesSend.get(index);
-      if (index < messagesSend.size() - 1) {
-        MessageBody syntheticMessageBody = inferSyntheticMessageBody(messageBody, messageString);
-        addMessageToProcessVars(id, syntheticMessageBody, processVariables);
-      } else {
-        addMessageToProcessVars(id, messageBody, processVariables);
-      }
-      LOG.info("Publishing message={} with processVars={}", messageString, processVariables);
-      response =
-          zeebeClient
-              .newPublishMessageCommand()
-              .messageName(messageString)
-              .correlationKey(id)
-              .variables(processVariables)
-              .send();
-    }
-    return response;
+              ZeebeFuture<PublishMessageResponse> response = null;
+              for (int index = 0; index < messagesToSend.size(); index++) {
+                String messageString = messagesToSend.get(index);
+                if (index < messagesToSend.size() - 1) {
+                  MessageBody syntheticMessageBody =
+                      inferSyntheticMessageBody(messageBody, messageString);
+                  addMessageToProcessVars(id, syntheticMessageBody, processVariables);
+                } else {
+                  addMessageToProcessVars(id, messageBody, processVariables);
+                }
+                LOG.info("Publishing message={}", messageString);
+                LOG.debug("with processVars={}", processVariables);
+                response =
+                    zeebeClient
+                        .newPublishMessageCommand()
+                        .messageName(messageString)
+                        .correlationKey(id)
+                        .variables(processVariables)
+                        .send();
+                LOG.debug("Published message={}", response);
+              }
+            });
   }
 
   private Mono<Map<String, Object>> getProcessVariables(String correlationKey) {
