@@ -20,8 +20,9 @@ public class MessageBody {
     return message;
   }
 
-  public void setMessage(String message) {
+  public MessageBody setMessage(String message) {
     this.message = message;
+    return this;
   }
 
   @Override
@@ -41,15 +42,17 @@ public class MessageBody {
     return date;
   }
 
-  public void setDate(Date date) {
+  public MessageBody setDate(Date date) {
     this.date = date;
+    return this;
   }
 
   public boolean isSynthetic() {
     return isSynthetic;
   }
 
-  public void setSynthetic(boolean synthetic) {
+  public MessageBody setSynthetic(boolean synthetic) {
     isSynthetic = synthetic;
+    return this;
   }
 }

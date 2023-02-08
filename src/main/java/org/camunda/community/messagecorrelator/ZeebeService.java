@@ -40,7 +40,17 @@ public class ZeebeService {
   }
 
   public ZeebeFuture<PublishMessageResponse> startProcessViaMessage(
-      String message, String correlationId, Map<String, Object> additionalProcessVariables) {
+      String message,
+      String correlationId,
+      Date date,
+      Map<String, Object> additionalProcessVariables) {
+
+    Map<String, MessageBody> messages = new HashMap<>();
+    MessageBody start = new MessageBody().setDate(date).setMessage(message).setSynthetic(false);
+    messages.put(correlationId, start);
+
+    additionalProcessVariables.put(messagesProcessVar, messages);
+
     return zeebeClient
         .newPublishMessageCommand()
         .messageName(message)
@@ -48,36 +58,6 @@ public class ZeebeService {
         .variables(additionalProcessVariables)
         .send();
   }
-
-  //  public ZeebeFuture<ProcessInstanceEvent> startProcessViaProcessDefinitionKey(
-  //      long processDefinitionKey, Map<String, Object> additionalProcessVariables) {
-  //    return zeebeClient
-  //        .newCreateInstanceCommand()
-  //        .processDefinitionKey(processDefinitionKey)
-  //        .variables(additionalProcessVariables)
-  //        .send();
-  //  }
-
-  //  public ZeebeFuture<ProcessInstanceEvent> startProcessViaBpmnProcessId(
-  //      String bpmnProcessId, int version, Map<String, Object> additionalProcessVariables) {
-  //    return zeebeClient
-  //        .newCreateInstanceCommand()
-  //        .bpmnProcessId(bpmnProcessId)
-  //        .version(version)
-  //        .variables(additionalProcessVariables)
-  //        .send();
-  //  }
-
-  /** starts latest version */
-  //  public ZeebeFuture<ProcessInstanceEvent> startProcessViaBpmnProcessId(
-  //      String bpmnProcessId, Map<String, Object> additionalProcessVariables) {
-  //    return zeebeClient
-  //        .newCreateInstanceCommand()
-  //        .bpmnProcessId(bpmnProcessId)
-  //        .latestVersion()
-  //        .variables(additionalProcessVariables)
-  //        .send();
-  //  }
 
   /**
    * @param messageBody

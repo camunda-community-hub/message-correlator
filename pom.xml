@@ -98,6 +98,13 @@
       <version>${zeebe.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- for JDK 8+ -->
+    <dependency>
+      <groupId>io.camunda</groupId>
+      <artifactId>zeebe-process-test-extension-testcontainer</artifactId>
+      <version>${zeebe.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- join for csv logging  -->
     <dependency>

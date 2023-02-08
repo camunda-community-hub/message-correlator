@@ -1,34 +1,62 @@
 package org.camunda.community.messagecorrelator;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import io.camunda.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.api.response.DeploymentEvent;
+import io.camunda.zeebe.process.test.api.ZeebeTestEngine;
+import io.camunda.zeebe.process.test.assertions.BpmnAssert;
+import io.camunda.zeebe.process.test.extension.testcontainer.ZeebeProcessTest;
+import io.camunda.zeebe.process.test.inspections.InspectionUtility;
+import io.camunda.zeebe.process.test.inspections.model.InspectedProcessInstance;
+import java.time.Duration;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
 
-@ExtendWith(MockitoExtension.class)
+@ZeebeProcessTest
 public class ZeebeServiceTest {
 
-  private ZeebeService zeebeService;
+  private ZeebeTestEngine engine;
+  private ZeebeClient client;
 
-  @BeforeEach
-  public void initService() {}
+  // TODO: currently the ZeebeTestEngine has an issue if there is a message startEvent and a
+  //  message subprocess. As a workaround in this test-process the main part of the process got
+  // wrapped inside a
+  //  subprocess
+  @Test
+  public void test() throws Exception {
+    ZeebeService zeebeService = new ZeebeService(client);
+    String myId = "test";
 
-  //    @Test
-  //    public void testStartProcessViaBpmnProcessId() throws Exception {
-  //        zeebeService.startProcessViaBpmnProcessId(null, null);
-  //    }
-  //
-  //    @Test
-  //    public void testStartProcessViaProcessDefinitionKey() throws Exception {
-  //        zeebeService.startProcessViaProcessDefinitionKey(0, null);
-  //    }
-  //
-  //    @Test
-  //    public void testStartProcessViaMessage() throws Exception {
-  //        zeebeService.startProcessViaMessage(null, null, null);
-  //    }
-  //
-  //    @Test
-  //    public void testSendMessage() {
-  //        zeebeService.sendArbitraryMessage(null, null, null);
-  //    }
+    DeploymentEvent deploymentEvent =
+        client
+            .newDeployCommand()
+            .addResourceFromClasspath("client_example/example_process_for_test.bpmn")
+            .send()
+            .join();
+    BpmnAssert.assertThat(deploymentEvent);
+
+    zeebeService
+        .startProcessViaMessage("START", myId, new Date(), new HashMap<>(Map.of("myId", myId)))
+        .join();
+
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    InspectedProcessInstance processInstance =
+        InspectionUtility.findProcessInstances().findLastProcessInstance().get();
+    BpmnAssert.assertThat(processInstance).isStarted();
+    BpmnAssert.assertThat(processInstance).isWaitingForMessages("A");
+    BpmnAssert.assertThat(processInstance).isActive();
+
+    MessageBody b = new MessageBody().setMessage("B").setSynthetic(true).setDate(new Date());
+    zeebeService.sendArbitraryMessage(b, myId, new HashMap<>()).block();
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    BpmnAssert.assertThat(processInstance).isActive();
+    BpmnAssert.assertThat(processInstance).isWaitingAtElements("Event_C");
+
+    MessageBody c = new MessageBody().setMessage("C").setSynthetic(true).setDate(new Date());
+    zeebeService.sendArbitraryMessage(c, myId, new HashMap<>()).block();
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    BpmnAssert.assertThat(processInstance).hasPassedElement("EndEvent_1");
+    BpmnAssert.assertThat(processInstance).isCompleted();
+  }
 }
