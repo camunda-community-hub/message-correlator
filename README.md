@@ -4,9 +4,10 @@
 # Motivation
 With BPMN we describe a well-defined structured flow in which a process should be executed.</br>
 It is possible to model a process which only contains Intermediate Message Catch Events to display the current state of a process.</br>
-This only works out-of-the box though, if all required Messages arrive in the modeled order.</br>
+This only works out-of-the box though, if all required Messages arrive eventually (ideally in the modeled order, even though that is not necessary, as Zeebe allows [Message Buffering](https://docs.camunda.io/docs/components/concepts/messages/#message-buffering)).</br>
 
-The real world, however, sometimes is messy and Messages might arrive out-of-order. This project allows handling of such scenarios.</br>
+The real world, however, sometimes is messy and Messages might get lost or arrive out-of-order.
+This project allows handling of scenarios in which Messages get lost and moves the process directly to the latest Message Event, even if Events in between are (still) missing.</br>
 
 # Usage
 - Process has to be started via `ZeebeService.startProcessViaMessage()`.
@@ -24,7 +25,6 @@ The real world, however, sometimes is messy and Messages might arrive out-of-ord
 - Possibility to request state from Zeebe: Process must contain an event-based SubProcess with
   - MessageStartMessage of type `message-correlator.syncMessage`
   - MessageEndEvent with TaskDefinition of type `message-correlator.syncTaskTypePrefix`+`id`
-  - In the future this might also be possible to do via Operate API, see https://github.com/camunda-community-hub/message-correlator/issues/15
 - The process must be modeled so that the same Message will always lead to the same succeeding Message Event (exception: event-based subprocesses)
 
 ## Example Process Model
@@ -46,7 +46,13 @@ message-correlator.messagesProcessVar=messages
 see also src/test/resources/client_example/example_application.properties
 
 # Limitations
-- Process can currently only move forward
-  - In the future it might also be possible to move process back using Process Instance Modification, see https://github.com/camunda-community-hub/message-correlator/issues/16
 - Process currently has to be started via Message
   - In the future, other start possibilities will be available, see https://github.com/camunda-community-hub/message-correlator/issues/17
+
+## Why we don't use Operate to query the current state
+When messages overtake each other due to a race condition, they will likely arrive within milliseconds of each other and then the eventual consistency will likely mean that the Operate API delivers and outdated result, thus leading to more synthetic messages. Operate is only an option, when the messages arrive with sufficient distance from each other, but in that case the workload of the engine is likely not that high that the direct queries to the process need to be prevented (see https://github.com/camunda-community-hub/message-correlator/issues/15#issuecomment-1423830436) </br>
+
+## Why we don't use Process Instance Modification
+[Process Instance Modification](https://docs.camunda.io/docs/components/operate/userguide/process-instance-modification/) allows us to move the Token within the process. When doing so the modification is clearly visible in Operate.</br>
+Process Instance Modification is currently not possible on all BPMN Elements (e.g. it is not possible to modify Process Instances within a Multi-Instance, and if an Intermediate Message Catch Event is behind an event-based Gateway, the event-based Gateway has to be activated, before the Message can be correlated) and it also breaks the history and Heatmap within Optimize.</br>
+See https://github.com/camunda-community-hub/message-correlator/issues/16#issuecomment-1423821925 for further information.
