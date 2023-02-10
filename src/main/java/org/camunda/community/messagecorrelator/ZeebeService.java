@@ -40,16 +40,7 @@ public class ZeebeService {
   }
 
   public ZeebeFuture<PublishMessageResponse> startProcessViaMessage(
-      String message,
-      String correlationId,
-      Date date,
-      Map<String, Object> additionalProcessVariables) {
-
-    Map<String, MessageBody> messages = new HashMap<>();
-    MessageBody start = new MessageBody().setDate(date).setMessage(message).setSynthetic(false);
-    messages.put(correlationId, start);
-
-    additionalProcessVariables.put(messagesProcessVar, messages);
+      String message, String correlationId, Map<String, Object> additionalProcessVariables) {
 
     return zeebeClient
         .newPublishMessageCommand()

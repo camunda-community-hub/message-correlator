@@ -36,8 +36,14 @@ public class ZeebeServiceTest {
             .join();
     BpmnAssert.assertThat(deploymentEvent);
 
+    Map<String, MessageBody> messages = new HashMap<>();
+    MessageBody start =
+        new MessageBody().setDate(new Date()).setMessage("START").setSynthetic(false);
+    messages.put(myId, start);
+
     zeebeService
-        .startProcessViaMessage("START", myId, new Date(), new HashMap<>(Map.of("myId", myId)))
+        .startProcessViaMessage(
+            "START", myId, new HashMap<>(Map.of("myId", myId, "messages", messages)))
         .join();
 
     engine.waitForIdleState(Duration.ofSeconds(5));
