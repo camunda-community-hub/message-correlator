@@ -19,10 +19,6 @@ public class ZeebeServiceTest {
   private ZeebeTestEngine engine;
   private ZeebeClient client;
 
-  // TODO: currently the ZeebeTestEngine has an issue if there is a message startEvent and a
-  //  message subprocess. As a workaround in this test-process the main part of the process got
-  // wrapped inside a
-  //  subprocess
   @Test
   public void test() throws Exception {
     ZeebeService zeebeService = new ZeebeService(client);
@@ -31,7 +27,7 @@ public class ZeebeServiceTest {
     DeploymentEvent deploymentEvent =
         client
             .newDeployCommand()
-            .addResourceFromClasspath("client_example/example_process_for_test.bpmn")
+            .addResourceFromClasspath("client_example/example_process.bpmn")
             .send()
             .join();
     BpmnAssert.assertThat(deploymentEvent);
