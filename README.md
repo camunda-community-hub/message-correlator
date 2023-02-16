@@ -6,13 +6,16 @@ With BPMN we describe a well-defined structured flow in which a process should b
 It is possible to model a process which only contains Intermediate Message Catch Events to display the current state of a process.</br>
 This only works out-of-the box though, if all required Messages arrive eventually (ideally in the modeled order, even though that is not necessary, as Zeebe allows [Message Buffering](https://docs.camunda.io/docs/components/concepts/messages/#message-buffering)).</br>
 
-The real world, however, sometimes is messy and Messages might get lost or arrive out-of-order.
+The real world, however, can be messy and <u>Messages might get lost</u>
 This project allows handling of scenarios in which Messages get lost and moves the process directly to the latest Message Event, even if Events in between are (still) missing.</br>
+
+This project originated from a use case in which it was important that an incoming Message gets correlated directly when it arrives, as the process variables, that got passed with it, had to be updated immediately.</br>
 
 # Usage
 - Process has to be started via `ZeebeService.startProcessViaMessage()`.
   -  to-be-correlated Messages have to be added by Client to processVars as a Map<String, MessageBody> with variableName=`message-correlator.messagesProcessVar`
 - Subsequent messages have to be sent via `ZeebeService.sendArbitraryMessage()`.
+- see src/test/java/org/camunda/community/messagecorrelator/ZeebeServiceTest and src/test/resources/client_example
 
 # Behaviour
 - If the process is currently waiting for the Message, it will get correlated.
@@ -44,10 +47,6 @@ message-correlator.syncTaskTypePrefix=processState_
 message-correlator.messagesProcessVar=messages
 ```
 see also src/test/resources/client_example/example_application.properties
-
-# Limitations
-- Process currently has to be started via Message
-  - In the future, other start possibilities will be available, see https://github.com/camunda-community-hub/message-correlator/issues/17
 
 ## Why we don't use Operate to query the current state
 When messages overtake each other due to a race condition, they will likely arrive within milliseconds of each other and then the eventual consistency will likely mean that the Operate API delivers and outdated result, thus leading to more synthetic messages. Operate is only an option, when the messages arrive with sufficient distance from each other, but in that case the workload of the engine is likely not that high that the direct queries to the process need to be prevented (see https://github.com/camunda-community-hub/message-correlator/issues/15#issuecomment-1423830436) </br>
