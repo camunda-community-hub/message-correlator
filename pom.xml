@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>message-correlator</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>message-correlator</name>
@@ -106,7 +106,7 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- join for csv logging  -->
+    <!-- join for Pair<> and some logging  -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>

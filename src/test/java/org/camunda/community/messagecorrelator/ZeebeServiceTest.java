@@ -116,6 +116,60 @@ public class ZeebeServiceTest {
     BpmnAssert.assertThat(processInstance).isCompleted(); // now both multi-instances have finished
   }
 
+  @Test
+  public void testEventbasedSubprocesses() throws Exception {
+    ZeebeService zeebeService = new ZeebeService(client);
+    String myId = "test";
+
+    DeploymentEvent deploymentEvent =
+        client
+            .newDeployCommand()
+            .addResourceFromClasspath("client_example/example_process.bpmn")
+            .send()
+            .join();
+    BpmnAssert.assertThat(deploymentEvent);
+
+    Map<String, MessageBody> messages = new HashMap<>();
+    MessageBody start =
+        new MessageBody().setDate(new Date()).setMessage("START").setSynthetic(false);
+    messages.put(myId, start);
+
+    zeebeService
+        .startProcessViaMessage(
+            "START", myId, new HashMap<>(Map.of("myId", myId, "messages", messages)))
+        .join();
+
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    InspectedProcessInstance processInstance =
+        InspectionUtility.findProcessInstances().findLastProcessInstance().get();
+    BpmnAssert.assertThat(processInstance).isStarted();
+    BpmnAssert.assertThat(processInstance).isWaitingForMessages("A");
+    BpmnAssert.assertThat(processInstance).isActive();
+
+    // non interrupting
+    MessageBody esbNonInterrupting =
+        new MessageBody()
+            .setMessage("ESB_MESSAGE_NONINTERRUPTING")
+            .setSynthetic(false)
+            .setDate(new Date());
+    zeebeService.sendArbitraryMessage(esbNonInterrupting, myId, new HashMap<>()).block();
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    BpmnAssert.assertThat(processInstance)
+        .hasPassedElementsInOrder(
+            "Event_ESB_MESSAGE_NONINTERRUPTING", "Event_ESB_MESSAGE_NONINTERRUPTING_ENDEVENT");
+    BpmnAssert.assertThat(processInstance).isWaitingAtElements("Event_A1");
+
+    // interrupting
+    MessageBody esb =
+        new MessageBody().setMessage("ESB_MESSAGE").setSynthetic(false).setDate(new Date());
+    zeebeService.sendArbitraryMessage(esb, myId, new HashMap<>()).block();
+
+    engine.waitForIdleState(Duration.ofSeconds(5));
+    BpmnAssert.assertThat(processInstance)
+        .hasPassedElementsInOrder("Event_ESB_MESSAGE", "Event_ESB_MESSAGE_ENDEVENT");
+    BpmnAssert.assertThat(processInstance).isCompleted();
+  }
+
   static class MyObject {
     private String myId;
     private String myValue;

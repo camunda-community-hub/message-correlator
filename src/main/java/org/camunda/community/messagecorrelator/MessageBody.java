@@ -2,9 +2,6 @@ package org.camunda.community.messagecorrelator;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.Date;
-import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class MessageBody {
 
@@ -27,15 +24,15 @@ public class MessageBody {
 
   @Override
   public String toString() {
-    return ToStringBuilder.reflectionToString(
-        this,
-        new MultilineRecursiveToStringStyle() {
-          public ToStringStyle withShortPrefixes() {
-            this.setUseShortClassName(true);
-            this.setUseIdentityHashCode(false);
-            return this;
-          }
-        }.withShortPrefixes());
+    return "MessageBody{"
+        + "date="
+        + date
+        + ", message='"
+        + message
+        + '\''
+        + ", isSynthetic="
+        + isSynthetic
+        + '}';
   }
 
   public Date getDate() {

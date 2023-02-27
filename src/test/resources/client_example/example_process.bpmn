@@ -78,6 +78,38 @@
       </bpmn:startEvent>
       <bpmn:sequenceFlow id="Flow_0tjpqsh" sourceRef="Event_1fickp5" targetRef="Event_0fo6j0a" />
     </bpmn:subProcess>
+    <bpmn:subProcess id="Activity_0bwcmn9" triggeredByEvent="true">
+      <bpmn:endEvent id="Event_ESB_MESSAGE_ENDEVENT">
+        <bpmn:incoming>Flow_1c9bi2t</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:startEvent id="Event_ESB_MESSAGE" name="ESB_MESSAGE">
+        <bpmn:outgoing>Flow_1c9bi2t</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_1p2l4rr" messageRef="Message_17c7gd8" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1c9bi2t" sourceRef="Event_ESB_MESSAGE" targetRef="Event_ESB_MESSAGE_ENDEVENT" />
+    </bpmn:subProcess>
+    <bpmn:subProcess id="Activity_07qvucr" triggeredByEvent="true">
+      <bpmn:endEvent id="Event_ESB_MESSAGE_NONINTERRUPTING_ENDEVENT">
+        <bpmn:incoming>Flow_0utsekb</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:startEvent id="Event_ESB_MESSAGE_NONINTERRUPTING" name="ESB_MESSAGE_NONINTERRUPTING" isInterrupting="false">
+        <bpmn:outgoing>Flow_0utsekb</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_1stsvv7" messageRef="Message_3qe7n66" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_0utsekb" sourceRef="Event_ESB_MESSAGE_NONINTERRUPTING" targetRef="Event_ESB_MESSAGE_NONINTERRUPTING_ENDEVENT" />
+    </bpmn:subProcess>
+    <bpmn:subProcess id="Activity_0dzvs52" triggeredByEvent="true">
+      <bpmn:endEvent id="Event_0eifhkd">
+        <bpmn:incoming>Flow_0cb5pas</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0cb5pas" sourceRef="Event_097v1ya" targetRef="Event_0eifhkd" />
+      <bpmn:startEvent id="Event_097v1ya" name="timer" isInterrupting="false">
+        <bpmn:outgoing>Flow_0cb5pas</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_01p0dmq">
+          <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/PT10M</bpmn:timeCycle>
+        </bpmn:timerEventDefinition>
+      </bpmn:startEvent>
+    </bpmn:subProcess>
   </bpmn:process>
   <bpmn:message id="Message_3895v4i" name="START" />
   <bpmn:message id="Message_3fjvh38" name="A">
@@ -96,6 +128,16 @@
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmn:message id="Message_1t0m3lf" name="C">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=myId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_17c7gd8" name="ESB_MESSAGE">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=myId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_3qe7n66" name="ESB_MESSAGE_NONINTERRUPTING">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=myId" />
     </bpmn:extensionElements>
@@ -153,21 +195,69 @@
       <bpmndi:BPMNShape id="Activity_03rptyv_di" bpmnElement="Activity_1yp0teq" isExpanded="true">
         <dc:Bounds x="160" y="280" width="170" height="120" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0j8ll5q_di" bpmnElement="Event_1fickp5">
-        <dc:Bounds x="182" y="302" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="166" y="345" width="69" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_111yrmj_di" bpmnElement="Event_0fo6j0a">
         <dc:Bounds x="272" y="302" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="256" y="345" width="69" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0j8ll5q_di" bpmnElement="Event_1fickp5">
+        <dc:Bounds x="182" y="302" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="166" y="345" width="69" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0tjpqsh_di" bpmnElement="Flow_0tjpqsh">
         <di:waypoint x="218" y="320" />
         <di:waypoint x="272" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0hszv5u_di" bpmnElement="Activity_0bwcmn9" isExpanded="true">
+        <dc:Bounds x="155" y="430" width="180" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0j7zk4h_di" bpmnElement="Event_ESB_MESSAGE_ENDEVENT">
+        <dc:Bounds x="277" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1yji4gh_di" bpmnElement="Event_ESB_MESSAGE">
+        <dc:Bounds x="182" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="515" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1c9bi2t_di" bpmnElement="Flow_1c9bi2t">
+        <di:waypoint x="218" y="490" />
+        <di:waypoint x="277" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_0a8ovja" bpmnElement="Activity_07qvucr" isExpanded="true">
+        <dc:Bounds x="155" y="570" width="180" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_01q7ipj" bpmnElement="Event_ESB_MESSAGE_NONINTERRUPTING_ENDEVENT">
+        <dc:Bounds x="277" y="612" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0mnr6gv_di" bpmnElement="Event_ESB_MESSAGE_NONINTERRUPTING">
+        <dc:Bounds x="182" y="612" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="655" width="87" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_16s7sr7" bpmnElement="Flow_0utsekb">
+        <di:waypoint x="218" y="630" />
+        <di:waypoint x="277" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_197s20y" bpmnElement="Activity_0dzvs52" isExpanded="true">
+        <dc:Bounds x="155" y="720" width="180" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1eced3e" bpmnElement="Event_0eifhkd">
+        <dc:Bounds x="277" y="762" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_05tnony_di" bpmnElement="Event_097v1ya">
+        <dc:Bounds x="182" y="762" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="188" y="805" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_1iny7mj" bpmnElement="Flow_0cb5pas">
+        <di:waypoint x="218" y="780" />
+        <di:waypoint x="277" y="780" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1ejr9rx_di" bpmnElement="Flow_1ejr9rx">
         <di:waypoint x="198" y="177" />

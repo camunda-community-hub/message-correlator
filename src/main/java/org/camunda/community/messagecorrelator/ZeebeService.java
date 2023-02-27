@@ -58,6 +58,19 @@ public class ZeebeService {
    */
   public Mono<Map<String, Object>> sendArbitraryMessage(
       MessageBody messageBody, String id, Map<String, Object> additionalProcessVars) {
+
+    // if targetMessage is in event-based subprocess -> send directly
+    if (bpmnModelService.isEventbasedSubProcessStartEvent(messageBody.getMessage())) {
+      zeebeClient
+          .newPublishMessageCommand()
+          .messageName(messageBody.getMessage())
+          .correlationKey(id)
+          .variables(additionalProcessVars)
+          .send();
+
+      return Mono.empty();
+    }
+
     // get process variables to be able to infer current state in the engine
     return getProcessVariables(id)
         .doOnSuccess(

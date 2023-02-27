@@ -426,4 +426,27 @@ public class BpmnModelService {
     }
     return false;
   }
+
+  boolean isEventbasedSubProcessStartEvent(String targetMessage) {
+    Collection<SubProcess> subProcesses = modelInstance.getModelElementsByType(SubProcess.class);
+
+    List<SubProcess> subProcessesAsList = new ArrayList<>(subProcesses);
+    for (SubProcess subProcess : subProcessesAsList) {
+      for (StartEvent se : subProcess.getChildElementsByType(StartEvent.class)) {
+        if (se.getEventDefinitions() != null && !se.getEventDefinitions().isEmpty()) {
+          EventDefinition eventDefinition = new ArrayList<>(se.getEventDefinitions()).get(0);
+          boolean isMessage = eventDefinition instanceof MessageEventDefinition;
+          if (isMessage) {
+            MessageEventDefinition asMessageEvent = (MessageEventDefinition) eventDefinition;
+            Message message = asMessageEvent.getMessage();
+            if (message.getName().equals(targetMessage)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
 }
